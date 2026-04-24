@@ -183,11 +183,12 @@ kaleido>=0.2.1
 
 ```
 customer-segmentation/
-│
+│---market_clustering_analysis.ipynb # expoloring notebook
 ├── market_clustering_analysis.py   # main analysis script
 ├── MARKETING CAMPAIGN DATA.csv     # raw dataset (from Kaggle)
 ├── requirements.txt
 ├── README.md
+
 │
 └── outputs/
     ├── 01_income_distribution.png
