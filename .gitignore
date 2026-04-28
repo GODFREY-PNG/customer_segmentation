@@ -1,6 +1,14 @@
 venv/
-.venv/
-env/
 __pycache__/
-.ipynb_checkpoints/
+*.pyc
+*.pyo
+.env
+frontend/node_modules/
+frontend/dist/
+outputs/data_*.csv
+outputs/selected_features.csv
+outputs/*.png
+outputs/*.html
+models/
+market_segmentation_model.pkl
 data/
