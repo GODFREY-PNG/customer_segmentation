@@ -12,7 +12,7 @@ import os
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# ── create output folders if they don't exist ──────────────────────────────
+# create output folders 
 os.makedirs("outputs", exist_ok=True)
 os.makedirs("models", exist_ok=True)
 
@@ -80,12 +80,12 @@ labels = final_model.named_steps["kmeans"].labels_
 print("Customers per segment:")
 print(pd.Series(labels).value_counts().sort_index())
 
-# ── save model to models/ folder ───────────────────────────────────────────
+#save model to models/ folder
 with open("models/market_segmentation_model.pkl", "wb") as f:
     pickle.dump(final_model, f)
 print("Model saved → models/market_segmentation_model.pkl")
 
-# also keep a copy at root so main.py can find it without changes
+# keep a copy at root so main.py can find it without changes
 with open("market_segmentation_model.pkl", "wb") as f:
     pickle.dump(final_model, f)
 print("Model copy saved → market_segmentation_model.pkl (for API)")

@@ -15,7 +15,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── load the trained model (models/ first, root as fallback) ───────────────
+#load the trained model (models/ first, root as fallback)
 MODEL_PATH = "models/market_segmentation_model.pkl"
 if not os.path.exists(MODEL_PATH):
     MODEL_PATH = "market_segmentation_model.pkl"
@@ -25,7 +25,7 @@ with open(MODEL_PATH, "rb") as f:
 
 print(f"Model loaded from: {MODEL_PATH}")
 
-# ── segment metadata ────────────────────────────────────────────────────────
+#  segment metadata
 SEGMENT_INFO = {
     0: {
         "name": "Budget Shoppers",

@@ -59,14 +59,14 @@ const ACTION_STYLES = {
   caution:     { bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.2)",  color: "#f59e0b", label: "Caution" },
 };
 
-// ── quality badge helper ─────────────────────────────────────────────────────
+// quality badge helper 
 function qualityLabel(score) {
   if (score < 25) return { label: "Needs work",    color: "#ef4444", bg: "rgba(239,68,68,0.1)",    tip: "Segments overlap significantly. Consider more features." };
   if (score < 50) return { label: "Good",          color: "#f59e0b", bg: "rgba(245,158,11,0.1)",   tip: "Groups are reasonably distinct — results are actionable." };
   return              { label: "Strong",           color: "#10b981", bg: "rgba(16,185,129,0.1)",   tip: "Segments are well-separated and highly reliable." };
 }
 
-// ── small bar ────────────────────────────────────────────────────────────────
+// small bar
 function Bar({ pct, color, height = 6 }) {
   const [w, setW] = useState(0);
   useEffect(() => { setTimeout(() => setW(pct), 100); }, [pct]);
@@ -77,7 +77,7 @@ function Bar({ pct, color, height = 6 }) {
   );
 }
 
-// ── animated counter ─────────────────────────────────────────────────────────
+// animated counter
 function Count({ to, prefix = "", suffix = "", decimals = 0 }) {
   const [v, setV] = useState(0);
   useEffect(() => {
@@ -89,7 +89,7 @@ function Count({ to, prefix = "", suffix = "", decimals = 0 }) {
   return <>{prefix}{decimals ? v.toFixed(decimals) : Math.round(v).toLocaleString()}{suffix}</>;
 }
 
-// ── segment card ─────────────────────────────────────────────────────────────
+// segment card 
 function SegmentCard({ seg, allSegments, index }) {
   const m   = SEGMENTS_META[seg.name] || {};
   const c   = m.accent || "#888";
@@ -183,7 +183,7 @@ function SegmentCard({ seg, allSegments, index }) {
   );
 }
 
-// ── predict tab ──────────────────────────────────────────────────────────────
+//  predict tab 
 function PredictTab() {
   const [form, setForm] = useState({
     income: 65000, age: 45, recency: 20, total_spend: 500,
@@ -333,7 +333,7 @@ function PredictTab() {
   );
 }
 
-// ── main ─────────────────────────────────────────────────────────────────────
+//main 
 export default function App() {
   const [tab, setTab]       = useState("dashboard");
   const [data, setData]     = useState(null);
@@ -377,7 +377,7 @@ export default function App() {
         }
       `}</style>
 
-      {/* ── top bar ── */}
+      {/* top bar  */}
       <header style={{ borderBottom: "1px solid #181d28", padding: "1rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <div style={{ width: 42, height: 42, borderRadius: 12, background: "linear-gradient(135deg,#6366f1,#10b981)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -396,7 +396,7 @@ export default function App() {
         </div>
       </header>
 
-      {/* ── key insight banner ── */}
+      {/*  key insight banner */}
       {champion && (
         <div style={{ background: "linear-gradient(90deg, rgba(16,185,129,0.1) 0%, rgba(99,102,241,0.08) 100%)", borderBottom: "1px solid rgba(16,185,129,0.15)", padding: "0.85rem 2rem", display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
           <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
@@ -408,7 +408,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ── hero metrics ── */}
+      {/* hero metrics */}
       {data && (
         <div className="hero" style={{ borderBottom: "1px solid #181d28", padding: "1.5rem 2rem" }}>
           <div className="hero-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1px" }}>
@@ -430,7 +430,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ── tabs ── */}
+      {/*  tabs  */}
       <div style={{ borderBottom: "1px solid #181d28", padding: "0 1.5rem", display: "flex", alignItems: "center", gap: "0.25rem" }}>
         {[
           { id: "dashboard", label: "Dashboard",          color: "#6366f1" },
@@ -449,7 +449,7 @@ export default function App() {
         ))}
       </div>
 
-      {/* ── main content ── */}
+      {/* main content */}
       <main className="main" style={{ padding: "2rem", maxWidth: 1360, margin: "0 auto" }}>
 
         {loading && (
@@ -464,7 +464,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ── dashboard tab ── */}
+        {/*  dashboard tab  */}
         {!loading && !error && data && tab === "dashboard" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
 
@@ -533,10 +533,10 @@ export default function App() {
           </div>
         )}
 
-        {/* ── predict tab ── */}
+        {/*  predict tab  */}
         {!loading && !error && tab === "predict" && <PredictTab />}
 
-        {/* ── actions tab ── */}
+        {/*  actions tab  */}
         {!loading && !error && data && tab === "actions" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 780 }}>
             <div>

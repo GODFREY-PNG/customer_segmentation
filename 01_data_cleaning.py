@@ -6,7 +6,7 @@ import os
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# ── create output folders if they don't exist ──────────────────────────────
+# create output folders 
 os.makedirs("outputs", exist_ok=True)
 os.makedirs("models", exist_ok=True)
 
@@ -16,7 +16,7 @@ df = pd.read_csv('data/MARKETING CAMPAIGN DATA.csv')
 # check column types and spot missing values
 print(df.info())
 
-# scan categorical columns for unexpected entries
+# check categorical columns for unexpected entries
 print("Education values:")
 print(df['Education'].value_counts())
 print()

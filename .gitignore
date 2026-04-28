@@ -3,8 +3,11 @@ __pycache__/
 *.pyc
 *.pyo
 .env
+.ipynb_checkpoints/
 frontend/node_modules/
 frontend/dist/
+frontend/.ipynb_checkpoints/
+outputs/.ipynb_checkpoints/
 outputs/data_*.csv
 outputs/selected_features.csv
 outputs/*.png
@@ -12,3 +15,5 @@ outputs/*.html
 models/
 market_segmentation_model.pkl
 data/
+MARKETING CAMPAIGN DATA.csv
+*.ipynb

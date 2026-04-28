@@ -6,7 +6,8 @@ import os
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# ── create output folders if they don't exist ──────────────────────────────
+#  create output folders 
+
 os.makedirs("outputs", exist_ok=True)
 os.makedirs("models", exist_ok=True)
 

@@ -2,7 +2,7 @@ import subprocess
 import sys
 import os
 
-# ── create output folders up front so every script finds them ──────────────
+# create output folders up front so every script finds them
 os.makedirs("outputs", exist_ok=True)
 os.makedirs("models", exist_ok=True)
 
