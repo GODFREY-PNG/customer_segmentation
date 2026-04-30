@@ -2,47 +2,61 @@ import { useState, useEffect } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-// Color system — one accent per segment
+// Color system — one accent per segment 
 const SEGMENT_STYLE = {
-  "High Value Champions": { accent: "#16a34a", label: "Retain"       },
-  "Budget Shoppers":      { accent: "#b45309", label: "Convert"      },
-  "Occasional Browsers":  { accent: "#1d4ed8", label: "Re-engage"    },
+  "High Value Champions": { accent: "#16a34a", label: "Retain"    },
+  "Budget Shoppers":      { accent: "#b45309", label: "Convert"   },
+  "Occasional Browsers":  { accent: "#1d4ed8", label: "Re-engage" },
 };
 
-// Thin horizontal progress bar
+// Thin progress bar
 function Bar({ pct, color }) {
   const [width, setWidth] = useState(0);
-  useEffect(() => { const t = setTimeout(() => setWidth(pct), 120); return () => clearTimeout(t); }, [pct]);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(pct), 120);
+    return () => clearTimeout(t);
+  }, [pct]);
   return (
     <div style={{ height: 3, background: "#e5e7eb", borderRadius: 99 }}>
-      <div style={{ width: `${width}%`, height: "100%", background: color, borderRadius: 99, transition: "width 1.1s ease" }} />
+      <div style={{
+        width: `${width}%`, height: "100%", background: color,
+        borderRadius: 99, transition: "width 1.1s ease"
+      }} />
     </div>
   );
 }
 
-// One segment row on the dashboard 
-function SegmentRow({ seg, totalRevenue, rank }) {
+// Segment row 
+function SegmentRow({ seg, totalRevenue }) {
+  // Guard — never render if data is missing
+  if (!seg || !totalRevenue) return null;
+
   const style   = SEGMENT_STYLE[seg.name] || { accent: "#6b7280", label: "—" };
-  const revenue = seg.count * seg.avg_spend;
-  const revPct  = ((revenue / totalRevenue) * 100).toFixed(1);
-  const spendVsAvg = (seg.avg_spend / (totalRevenue / (seg.count || 1))).toFixed(1);
+  const revenue = (seg.count ?? 0) * (seg.avg_spend ?? 0);
+  const revPct  = totalRevenue > 0 ? ((revenue / totalRevenue) * 100).toFixed(1) : "0.0";
 
   return (
     <div style={{ borderBottom: "1px solid #f3f4f6", padding: "1.25rem 0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: style.accent, background: `${style.accent}14`, border: `1px solid ${style.accent}30`, padding: "2px 9px", borderRadius: 4, letterSpacing: "0.05em" }}>
+          <span style={{
+            fontSize: "0.7rem", fontWeight: 700, color: style.accent,
+            background: `${style.accent}14`, border: `1px solid ${style.accent}30`,
+            padding: "2px 9px", borderRadius: 4, letterSpacing: "0.05em"
+          }}>
             {style.label}
           </span>
           <div>
             <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "#111827" }}>{seg.name}</p>
             <p style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: 1 }}>
-              {seg.count.toLocaleString()} customers · {seg.percentage}% of base
+              {(seg.count ?? 0).toLocaleString()} customers · {seg.percentage ?? 0}% of base
             </p>
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <p style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>${seg.avg_spend.toLocaleString()}</p>
+          <p style={{ fontSize: "1rem", fontWeight: 700, color: "#111827" }}>
+            ${(seg.avg_spend ?? 0).toLocaleString()}
+          </p>
           <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>avg spend</p>
         </div>
       </div>
@@ -50,8 +64,8 @@ function SegmentRow({ seg, totalRevenue, rank }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.75rem", marginBottom: 10 }}>
         {[
           { label: "Revenue share", value: `${revPct}%` },
-          { label: "Avg income",    value: `$${(seg.avg_income / 1000).toFixed(0)}k` },
-          { label: "Avg purchases", value: seg.avg_purchases },
+          { label: "Avg income",    value: `$${((seg.avg_income ?? 0) / 1000).toFixed(0)}k` },
+          { label: "Avg purchases", value: seg.avg_purchases ?? "—" },
         ].map(({ label, value }) => (
           <div key={label} style={{ background: "#f9fafb", borderRadius: 6, padding: "0.5rem 0.75rem" }}>
             <p style={{ fontSize: "0.65rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</p>
@@ -66,7 +80,7 @@ function SegmentRow({ seg, totalRevenue, rank }) {
   );
 }
 
-//  Predict tab
+// Predict tab 
 function PredictTab() {
   const [form, setForm] = useState({
     income: 65000, age: 45, recency: 20, total_spend: 500,
@@ -92,13 +106,17 @@ function PredictTab() {
     setLoading(true); setError(null);
     try {
       const res = await fetch(`${API_URL}/predict`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(f),
       });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       setResult(await res.json());
-    } catch (e) { setError(e.message); }
-    finally { setLoading(false); }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleChange(key, value) {
@@ -117,7 +135,9 @@ function PredictTab() {
       {/* sliders */}
       <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "1.5rem" }}>
         <h3 style={{ fontSize: "0.9rem", fontWeight: 600, color: "#111827", marginBottom: 4 }}>Customer profile</h3>
-        <p style={{ fontSize: "0.75rem", color: "#9ca3af", marginBottom: "1.25rem" }}>Adjust the sliders — result updates automatically.</p>
+        <p style={{ fontSize: "0.75rem", color: "#9ca3af", marginBottom: "1.25rem" }}>
+          Adjust the sliders — result updates automatically.
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}>
           {FIELDS.map(({ key, label, unit, min, max, step }) => (
             <div key={key}>
@@ -127,9 +147,11 @@ function PredictTab() {
                   {unit === "$" ? `$${form[key].toLocaleString()}` : `${form[key]}${unit}`}
                 </span>
               </div>
-              <input type="range" min={min} max={max} step={step} value={form[key]}
+              <input
+                type="range" min={min} max={max} step={step} value={form[key]}
                 onChange={e => handleChange(key, e.target.value)}
-                style={{ width: "100%", accentColor: "#374151", height: 3, cursor: "pointer" }} />
+                style={{ width: "100%", accentColor: "#374151", height: 3, cursor: "pointer" }}
+              />
             </div>
           ))}
         </div>
@@ -140,25 +162,46 @@ function PredictTab() {
         {error && (
           <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "1rem 1.25rem" }}>
             <p style={{ color: "#dc2626", fontSize: "0.8rem" }}>Could not reach API — {error}</p>
+            <p style={{ color: "#9ca3af", fontSize: "0.72rem", marginTop: 4 }}>
+              Check that VITE_API_URL is set correctly in your Vercel environment variables.
+            </p>
+          </div>
+        )}
+        {!error && !result && loading && (
+          <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "2rem", textAlign: "center" }}>
+            <p style={{ color: "#9ca3af", fontSize: "0.82rem" }}>Loading prediction...</p>
           </div>
         )}
         {result && (
-          <div style={{ background: "#fff", border: `1px solid ${style.accent}30`, borderTop: `3px solid ${style.accent}`, borderRadius: 10, padding: "1.5rem" }}>
-            <p style={{ fontSize: "0.65rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Predicted segment</p>
+          <div style={{
+            background: "#fff",
+            border: `1px solid ${style.accent ?? "#e5e7eb"}30`,
+            borderTop: `3px solid ${style.accent ?? "#e5e7eb"}`,
+            borderRadius: 10, padding: "1.5rem"
+          }}>
+            <p style={{ fontSize: "0.65rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>
+              Predicted segment
+            </p>
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "1.25rem" }}>
-              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: style.accent, background: `${style.accent}14`, padding: "2px 9px", borderRadius: 4 }}>{style.label}</span>
+              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: style.accent, background: `${style.accent}14`, padding: "2px 9px", borderRadius: 4 }}>
+                {style.label}
+              </span>
               <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#111827" }}>{result.segment_name}</h2>
             </div>
-            <p style={{ fontSize: "0.82rem", color: "#4b5563", lineHeight: 1.65, marginBottom: "1.25rem" }}>{result.description}</p>
-
+            <p style={{ fontSize: "0.82rem", color: "#4b5563", lineHeight: 1.65, marginBottom: "1.25rem" }}>
+              {result.description}
+            </p>
             <div style={{ background: "#f9fafb", borderRadius: 8, padding: "1rem", marginBottom: "1rem" }}>
-              <p style={{ fontSize: "0.65rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Recommended action</p>
+              <p style={{ fontSize: "0.65rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                Recommended action
+              </p>
               <p style={{ fontSize: "0.82rem", color: "#374151", lineHeight: 1.65 }}>{result.strategy}</p>
             </div>
-
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-              {result.traits.map(t => (
-                <span key={t} style={{ fontSize: "0.72rem", color: "#6b7280", background: "#f3f4f6", padding: "3px 10px", borderRadius: 4 }}>{t}</span>
+              {(result.traits ?? []).map(t => (
+                <span key={t} style={{ fontSize: "0.72rem", color: "#6b7280", background: "#f3f4f6", padding: "3px 10px", borderRadius: 4 }}>
+                  {t}
+                </span>
               ))}
             </div>
             {loading && <p style={{ fontSize: "0.7rem", color: "#9ca3af", marginTop: 10 }}>Updating...</p>}
@@ -169,7 +212,7 @@ function PredictTab() {
   );
 }
 
-//  Main app
+//  Main app 
 export default function App() {
   const [tab, setTab]         = useState("segments");
   const [data, setData]       = useState(null);
@@ -178,20 +221,24 @@ export default function App() {
 
   useEffect(() => {
     fetch(`${API_URL}/analytics`)
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d  => { setData(d); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  const totalRevenue = data ? data.segments.reduce((a, s) => a + s.count * s.avg_spend, 0) : 0;
-  const champion     = data ? data.segments.find(s => s.name === "High Value Champions") : null;
-  const champRevPct  = champion ? Math.round((champion.count * champion.avg_spend / totalRevenue) * 100) : 0;
+  // All derived values use optional chaining — never crash if data is null
+  const segments     = data?.segments ?? [];
+  const totalRevenue = segments.reduce((a, s) => a + (s.count ?? 0) * (s.avg_spend ?? 0), 0);
+  const champion     = segments.find(s => s.name === "High Value Champions") ?? null;
+  const champRevPct  = champion && totalRevenue > 0
+    ? Math.round(((champion.count ?? 0) * (champion.avg_spend ?? 0) / totalRevenue) * 100)
+    : 0;
 
   const TABS = [
-    { id: "segments",    label: "Segments"       },
-    { id: "insights",    label: "Insights"       },
-    { id: "actions",     label: "Actions"        },
-    { id: "predict",     label: "Predict"        },
+    { id: "segments", label: "Segments" },
+    { id: "insights", label: "Insights" },
+    { id: "actions",  label: "Actions"  },
+    { id: "predict",  label: "Predict"  },
   ];
 
   return (
@@ -211,30 +258,33 @@ export default function App() {
           <p style={{ fontSize: "0.72rem", color: "#9ca3af", marginTop: 1 }}>K-Means · 2,239 customers · 3 segments</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#16a34a" }} />
-          <span style={{ fontSize: "0.72rem", color: "#6b7280" }}>API connected</span>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: loading ? "#f59e0b" : error ? "#dc2626" : "#16a34a" }} />
+          <span style={{ fontSize: "0.72rem", color: "#6b7280" }}>
+            {loading ? "Connecting..." : error ? "API unreachable" : "API connected"}
+          </span>
         </div>
       </header>
 
-      {/* key stat banner — only shown when data loaded */}
+      {/* champion banner — only shown when data is loaded */}
       {champion && (
         <div style={{ background: "#f0fdf4", borderBottom: "1px solid #bbf7d0", padding: "0.75rem 2rem" }}>
           <p style={{ fontSize: "0.8rem", color: "#15803d" }}>
-            <strong>High Value Champions</strong> make up {champion.percentage}% of customers but generate <strong>{champRevPct}% of total revenue.</strong>
+            <strong>High Value Champions</strong> make up {champion.percentage}% of customers
+            but generate <strong>{champRevPct}% of total revenue.</strong>
             {" "}Retaining this group is the single highest-ROI action available.
           </p>
         </div>
       )}
 
-      {/* hero metrics */}
+      {/* hero metrics — only shown when data is loaded */}
       {data && (
         <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "1.25rem 2rem" }}>
-          <div className="hero-row" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0" }}>
+          <div className="hero-row" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
             {[
-              { label: "Customers",        value: data.total_customers.toLocaleString(), sub: "records analysed"                },
-              { label: "Segments found",   value: data.num_segments,                     sub: "distinct groups"                 },
-              { label: "Silhouette score", value: data.model_info.silhouette_score,      sub: "cluster quality (0–1 scale)"    },
-              { label: "Variance captured",value: `${Math.round(data.model_info.pca_variance_explained * 100)}%`, sub: "by top 2 PCA components" },
+              { label: "Customers",         value: (data.total_customers ?? 0).toLocaleString(), sub: "records analysed"              },
+              { label: "Segments found",    value: data.num_segments ?? "—",                     sub: "distinct groups"               },
+              { label: "Silhouette score",  value: data.model_info?.silhouette_score ?? "—",     sub: "cluster quality (0–1 scale)"   },
+              { label: "Variance captured", value: `${Math.round((data.model_info?.pca_variance_explained ?? 0) * 100)}%`, sub: "by top 2 PCA components" },
             ].map(({ label, value, sub }, i) => (
               <div key={label} style={{ padding: "0.75rem 1.5rem", borderRight: i < 3 ? "1px solid #f3f4f6" : "none" }}>
                 <p style={{ fontSize: "0.65rem", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</p>
@@ -250,54 +300,66 @@ export default function App() {
       <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "0 2rem", display: "flex", gap: "0.1rem" }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
-            background: "none", border: "none", borderBottom: tab === t.id ? "2px solid #111827" : "2px solid transparent",
-            padding: "0.85rem 1rem", fontSize: "0.82rem", fontWeight: tab === t.id ? 600 : 400,
-            color: tab === t.id ? "#111827" : "#9ca3af", cursor: "pointer", fontFamily: "inherit",
-            transition: "color 0.15s"
+            background: "none", border: "none",
+            borderBottom: tab === t.id ? "2px solid #111827" : "2px solid transparent",
+            padding: "0.85rem 1rem", fontSize: "0.82rem",
+            fontWeight: tab === t.id ? 600 : 400,
+            color: tab === t.id ? "#111827" : "#9ca3af",
+            cursor: "pointer", fontFamily: "inherit", transition: "color 0.15s"
           }}>{t.label}</button>
         ))}
       </div>
 
-      {/* content */}
+      {/* main content */}
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem" }}>
-        {loading && <p style={{ color: "#9ca3af", fontSize: "0.85rem" }}>Loading...</p>}
-        {error   && (
-          <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "1rem 1.25rem" }}>
-            <p style={{ color: "#dc2626", fontSize: "0.82rem" }}>Cannot reach API at {API_URL} — {error}</p>
+
+        {/* loading state */}
+        {loading && (
+          <p style={{ color: "#9ca3af", fontSize: "0.85rem" }}>Loading...</p>
+        )}
+
+        {/* error state — shown but does not crash */}
+        {!loading && error && (
+          <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "1.25rem 1.5rem" }}>
+            <p style={{ color: "#dc2626", fontSize: "0.85rem", fontWeight: 600, marginBottom: 4 }}>Cannot reach API</p>
+            <p style={{ color: "#6b7280", fontSize: "0.78rem" }}>{API_URL} — {error}</p>
+            <p style={{ color: "#9ca3af", fontSize: "0.72rem", marginTop: 8 }}>
+              Go to Vercel → Settings → Environment Variables and confirm VITE_API_URL points to your Railway URL, then redeploy.
+            </p>
           </div>
         )}
 
-        {/*  SEGMENTS tab */}
+        {/*  SEGMENTS tab  */}
         {!loading && !error && data && tab === "segments" && (
           <div className="grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", alignItems: "start" }}>
-            {/* segment list */}
             <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "1.5rem" }}>
               <h2 style={{ fontSize: "0.9rem", fontWeight: 600, color: "#111827", marginBottom: 2 }}>Segment breakdown</h2>
               <p style={{ fontSize: "0.75rem", color: "#9ca3af", marginBottom: "0.5rem" }}>Ranked by average spend</p>
-              {[...data.segments]
-                .sort((a, b) => b.avg_spend - a.avg_spend)
-                .map((seg, i) => <SegmentRow key={seg.id} seg={seg} totalRevenue={totalRevenue} rank={i + 1} />)}
+              {[...segments]
+                .sort((a, b) => (b.avg_spend ?? 0) - (a.avg_spend ?? 0))
+                .map(seg => (
+                  <SegmentRow key={seg.id} seg={seg} totalRevenue={totalRevenue} />
+                ))}
             </div>
 
-            {/* revenue breakdown */}
             <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 10, padding: "1.5rem" }}>
               <h2 style={{ fontSize: "0.9rem", fontWeight: 600, color: "#111827", marginBottom: 2 }}>Revenue distribution</h2>
               <p style={{ fontSize: "0.75rem", color: "#9ca3af", marginBottom: "1.25rem" }}>Who is actually driving revenue</p>
-              {[...data.segments]
-                .sort((a, b) => b.avg_spend - a.avg_spend)
+              {[...segments]
+                .sort((a, b) => (b.avg_spend ?? 0) - (a.avg_spend ?? 0))
                 .map(seg => {
-                  const style  = SEGMENT_STYLE[seg.name] || { accent: "#6b7280" };
-                  const rev    = seg.count * seg.avg_spend;
-                  const revPct = ((rev / totalRevenue) * 100).toFixed(1);
+                  const s      = SEGMENT_STYLE[seg.name] || { accent: "#6b7280" };
+                  const rev    = (seg.count ?? 0) * (seg.avg_spend ?? 0);
+                  const revPct = totalRevenue > 0 ? ((rev / totalRevenue) * 100).toFixed(1) : "0.0";
                   return (
                     <div key={seg.id} style={{ marginBottom: "1.25rem" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                         <p style={{ fontSize: "0.82rem", fontWeight: 500, color: "#374151" }}>{seg.name}</p>
                         <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "#111827" }}>{revPct}%</p>
                       </div>
-                      <Bar pct={parseFloat(revPct)} color={style.accent} />
+                      <Bar pct={parseFloat(revPct)} color={s.accent} />
                       <p style={{ fontSize: "0.68rem", color: "#9ca3af", marginTop: 4 }}>
-                        ${(rev / 1000).toFixed(0)}k total · {seg.count.toLocaleString()} customers
+                        ${(rev / 1000).toFixed(0)}k total · {(seg.count ?? 0).toLocaleString()} customers
                       </p>
                     </div>
                   );
@@ -306,7 +368,7 @@ export default function App() {
               <div style={{ background: "#f9fafb", borderRadius: 8, padding: "1rem", marginTop: "1.5rem", borderTop: "1px solid #e5e7eb" }}>
                 <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "#374151", marginBottom: 4 }}>The concentration problem</p>
                 <p style={{ fontSize: "0.78rem", color: "#6b7280", lineHeight: 1.65 }}>
-                  High Value Champions are {champion?.percentage}% of customers but drive {champRevPct}% of revenue.
+                  High Value Champions are {champion?.percentage ?? "—"}% of customers but drive {champRevPct}% of revenue.
                   A marketing strategy that treats all customers equally is actively wasting budget.
                 </p>
               </div>
@@ -314,17 +376,23 @@ export default function App() {
           </div>
         )}
 
-        {/*  INSIGHTS tab */}
+        {/* INSIGHTS tab  */}
         {!loading && !error && data && tab === "insights" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 720 }}>
             <div style={{ marginBottom: "0.5rem" }}>
               <h2 style={{ fontSize: "1rem", fontWeight: 600, color: "#111827" }}>What the data tells us</h2>
-              <p style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: 3 }}>Findings pulled directly from the model output — no estimates.</p>
+              <p style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: 3 }}>
+                Findings pulled directly from the model output — no estimates.
+              </p>
             </div>
-            {data.key_insights.map((ins, i) => {
+            {(data.key_insights ?? []).map((ins, i) => {
               const leftColor = { revenue: "#16a34a", opportunity: "#1d4ed8", behavior: "#b45309", warning: "#dc2626" }[ins.type] || "#6b7280";
               return (
-                <div key={i} style={{ background: "#fff", border: "1px solid #e5e7eb", borderLeft: `3px solid ${leftColor}`, borderRadius: "0 8px 8px 0", padding: "1.1rem 1.35rem" }}>
+                <div key={i} style={{
+                  background: "#fff", border: "1px solid #e5e7eb",
+                  borderLeft: `3px solid ${leftColor}`, borderRadius: "0 8px 8px 0",
+                  padding: "1.1rem 1.35rem"
+                }}>
                   <p style={{ fontSize: "0.65rem", color: leftColor, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600, marginBottom: 4 }}>{ins.type}</p>
                   <h3 style={{ fontSize: "0.9rem", fontWeight: 600, color: "#111827", marginBottom: 6 }}>{ins.title}</h3>
                   <p style={{ fontSize: "0.8rem", color: "#6b7280", lineHeight: 1.65 }}>{ins.detail}</p>
@@ -345,7 +413,7 @@ export default function App() {
               {
                 rank: "01", color: "#16a34a", tag: "Highest priority",
                 title: "Retain High Value Champions",
-                why: `They are ${champion?.percentage}% of your customer base but drive ${champRevPct}% of revenue. Losing even a small number has an immediate financial impact.`,
+                why: `They are ${champion?.percentage ?? "—"}% of your customer base but drive ${champRevPct}% of revenue. Losing even a small number has an immediate financial impact.`,
                 how: "Loyalty rewards, early product access, and personal outreach. These customers respond to feeling recognised — not discounts.",
                 metric: `${champRevPct}% of revenue depends on this segment`
               },
@@ -359,7 +427,7 @@ export default function App() {
               {
                 rank: "03", color: "#b45309", tag: "Low-cost channel",
                 title: "Re-engage Occasional Browsers",
-                why: "Highest web visits but lowest spend at $98. They know the brand — they just haven't converted. Over-investing here has a poor return.",
+                why: "Highest web visits but lowest spend at $98. They know the brand — they just have not converted. Over-investing here has a poor return.",
                 how: "Low-cost email re-engagement and time-limited entry offers. Test on the most active browsers first before scaling spend.",
                 metric: "Moving 10% into Budget Shoppers adds volume at near-zero acquisition cost"
               },
@@ -368,7 +436,12 @@ export default function App() {
                 <p style={{ fontSize: "1.5rem", fontWeight: 700, color: "#e5e7eb", fontFamily: "monospace", flexShrink: 0, lineHeight: 1 }}>{rank}</p>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: 8 }}>
-                    <span style={{ fontSize: "0.65rem", fontWeight: 700, color, background: `${color}10`, border: `1px solid ${color}25`, padding: "2px 9px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{tag}</span>
+                    <span style={{
+                      fontSize: "0.65rem", fontWeight: 700, color,
+                      background: `${color}10`, border: `1px solid ${color}25`,
+                      padding: "2px 9px", borderRadius: 4,
+                      textTransform: "uppercase", letterSpacing: "0.05em"
+                    }}>{tag}</span>
                   </div>
                   <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "#111827", marginBottom: 10 }}>{title}</h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -391,7 +464,7 @@ export default function App() {
         )}
 
         {/*  PREDICT tab  */}
-        {!loading && !error && tab === "predict" && <PredictTab />}
+        {!loading && tab === "predict" && <PredictTab />}
       </main>
 
       <footer style={{ borderTop: "1px solid #e5e7eb", padding: "1rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
