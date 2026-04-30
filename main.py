@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Model loading 
+# Model loading
 # Checks models/ first; falls back to root for local development
 MODEL_PATH = "models/market_segmentation_model.pkl"
 if not os.path.exists(MODEL_PATH):
@@ -25,7 +25,7 @@ with open(MODEL_PATH, "rb") as f:
 
 print(f"Model loaded from: {MODEL_PATH}")
 
-#  Segment metadat
+#  Segment metadata
 # Derived from centroid profiles — verified against training data output
 SEGMENT_INFO = {
     0: {
@@ -49,7 +49,7 @@ SEGMENT_INFO = {
         "color": "#10b981",
         "icon": "champion",
         "description": "Top-tier customers with the highest spend, income, and purchase frequency.",
-        "strategy": "Protect with loyalty rewards and early product access. This segment drives disproportionate revenue retention is the priority.",
+        "strategy": "Protect with loyalty rewards and early product access. This segment drives disproportionate revenue — retention is the priority.",
         "traits": ["Highest spenders", "Most purchases", "Highest income", "Low deal dependency"]
     }
 }
@@ -60,7 +60,7 @@ FEATURE_COLUMNS = [
 ]
 
 
-# Schemas
+#  Schemas
 class CustomerInput(BaseModel):
     income: float
     age: int
@@ -83,7 +83,7 @@ class PredictionResponse(BaseModel):
     confidence_note: str
 
 
-#  Routes 
+# Routes
 @app.get("/")
 def root():
     return {
@@ -141,6 +141,8 @@ def get_analytics():
                 "name": "Budget Shoppers",
                 "color": "#f59e0b",
                 "icon": "budget",
+                "count": 1008,
+                "percentage": 45.0,
                 "avg_income": 53164,
                 "avg_spend": 681,
                 "avg_purchases": 16.1,
@@ -155,6 +157,8 @@ def get_analytics():
                 "name": "Occasional Browsers",
                 "color": "#6366f1",
                 "icon": "browser",
+                "count": 461,
+                "percentage": 20.6,
                 "avg_income": 34562,
                 "avg_spend": 98,
                 "avg_purchases": 5.9,
@@ -169,6 +173,8 @@ def get_analytics():
                 "name": "High Value Champions",
                 "color": "#10b981",
                 "icon": "champion",
+                "count": 770,
+                "percentage": 34.4,
                 "avg_income": 73902,
                 "avg_spend": 1223,
                 "avg_purchases": 19.1,
