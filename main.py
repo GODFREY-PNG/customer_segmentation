@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pickle
 import pandas as pd
-import numpy as np
 import os
 
 app = FastAPI(title="Customer Segmentation API")
@@ -15,7 +14,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#load the trained model (models/ first, root as fallback)
+# Model loading 
+# Checks models/ first; falls back to root for local development
 MODEL_PATH = "models/market_segmentation_model.pkl"
 if not os.path.exists(MODEL_PATH):
     MODEL_PATH = "market_segmentation_model.pkl"
@@ -25,31 +25,32 @@ with open(MODEL_PATH, "rb") as f:
 
 print(f"Model loaded from: {MODEL_PATH}")
 
-#  segment metadata
+#  Segment metadat
+# Derived from centroid profiles — verified against training data output
 SEGMENT_INFO = {
     0: {
         "name": "Budget Shoppers",
         "color": "#f59e0b",
         "icon": "budget",
-        "description": "Price-sensitive customers who browse frequently but convert rarely.",
-        "strategy": "Target with discounts, flash sales and re-engagement emails to convert browsing into purchases.",
-        "traits": ["High web visits", "Low spend", "Rarely convert", "Deal-seekers"]
+        "description": "Deal-driven customers who purchase regularly but rely heavily on discounts.",
+        "strategy": "Reduce deal dependency through loyalty rewards. Convert repeat discount buyers into consistent full-price purchasers to protect margin.",
+        "traits": ["Deal-driven", "Regular buyers", "Mid income", "High web visits"]
     },
     1: {
+        "name": "Occasional Browsers",
+        "color": "#6366f1",
+        "icon": "browser",
+        "description": "Low-spend customers who browse frequently but rarely convert.",
+        "strategy": "Low-cost re-engagement emails and entry-level offers. Realistic goal: move a portion into Budget Shoppers, not Champions.",
+        "traits": ["High web visits", "Lowest spend", "Rarely convert", "Lowest income"]
+    },
+    2: {
         "name": "High Value Champions",
         "color": "#10b981",
         "icon": "champion",
-        "description": "Top-tier customers with the highest spend and purchase frequency.",
-        "strategy": "Reward loyalty with early access, premium bundles and exclusive offers. Highest ROI — protect at all costs.",
-        "traits": ["Highest spenders", "Most purchases", "Brand loyal", "Low web visits"]
-    },
-    2: {
-        "name": "Mid-Tier Regulars",
-        "color": "#6366f1",
-        "icon": "midtier",
-        "description": "High income earners who are underengaged — strong upsell potential.",
-        "strategy": "Personalized product recommendations and targeted upsell campaigns to unlock their spending power.",
-        "traits": ["High income", "Moderate spend", "Underengaged", "Upsell potential"]
+        "description": "Top-tier customers with the highest spend, income, and purchase frequency.",
+        "strategy": "Protect with loyalty rewards and early product access. This segment drives disproportionate revenue retention is the priority.",
+        "traits": ["Highest spenders", "Most purchases", "Highest income", "Low deal dependency"]
     }
 }
 
@@ -59,6 +60,7 @@ FEATURE_COLUMNS = [
 ]
 
 
+# Schemas
 class CustomerInput(BaseModel):
     income: float
     age: int
@@ -81,6 +83,7 @@ class PredictionResponse(BaseModel):
     confidence_note: str
 
 
+#  Routes 
 @app.get("/")
 def root():
     return {
@@ -93,14 +96,14 @@ def root():
 def predict(customer: CustomerInput):
     try:
         input_df = pd.DataFrame([{
-            'NumDealsPurchases': customer.num_deals_purchases,
-            'NumWebVisitsMonth': customer.num_web_visits_month,
-            'TotalPurchases': customer.total_purchases,
-            'Age': customer.age,
-            'Recency': customer.recency,
-            'CustomerTenure': customer.customer_tenure,
-            'TotalSpend': customer.total_spend,
-            'Income': customer.income
+            'NumDealsPurchases':  customer.num_deals_purchases,
+            'NumWebVisitsMonth':  customer.num_web_visits_month,
+            'TotalPurchases':     customer.total_purchases,
+            'Age':                customer.age,
+            'Recency':            customer.recency,
+            'CustomerTenure':     customer.customer_tenure,
+            'TotalSpend':         customer.total_spend,
+            'Income':             customer.income
         }])
 
         segment_id = int(model.predict(input_df)[0])
@@ -114,7 +117,7 @@ def predict(customer: CustomerInput):
             description=info["description"],
             strategy=info["strategy"],
             traits=info["traits"],
-            confidence_note="Based on K-Means clustering trained on 2,240 marketing campaign records."
+            confidence_note="K-Means model trained on 2,239 marketing campaign records across 8 behavioral features."
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -122,14 +125,14 @@ def predict(customer: CustomerInput):
 
 @app.get("/analytics")
 def get_analytics():
-    """Return pre-computed segment analytics for the dashboard."""
+    """Pre-computed segment analytics for the dashboard."""
     return {
         "total_customers": 2239,
         "num_segments": 3,
         "model_info": {
             "algorithm": "K-Means Clustering",
             "features_used": 8,
-            "silhouette_score": 0.27,
+            "silhouette_score": 0.35,
             "pca_variance_explained": 0.57
         },
         "segments": [
@@ -138,67 +141,64 @@ def get_analytics():
                 "name": "Budget Shoppers",
                 "color": "#f59e0b",
                 "icon": "budget",
-                "count": 1008,
-                "percentage": 45.0,
-                "avg_income": 34625,
-                "avg_spend": 98,
-                "avg_purchases": 5.9,
-                "avg_web_visits": 6.4,
-                "avg_age": 55,
-                "description": "Price-sensitive browsers who rarely convert",
-                "strategy": "Discounts, flash sales, re-engagement emails"
+                "avg_income": 53164,
+                "avg_spend": 681,
+                "avg_purchases": 16.1,
+                "avg_web_visits": 6.7,
+                "avg_deals": 4.94,
+                "avg_age": 61,
+                "description": "Regular buyers who rely heavily on deals and discounts.",
+                "strategy": "Loyalty rewards to reduce deal dependency and protect margin."
             },
             {
                 "id": 1,
-                "name": "High Value Champions",
-                "color": "#10b981",
-                "icon": "champion",
-                "count": 770,
-                "percentage": 34.4,
-                "avg_income": 73915,
-                "avg_spend": 1224,
-                "avg_purchases": 19.1,
-                "avg_web_visits": 3.1,
-                "avg_age": 59,
-                "description": "Top spenders with highest purchase frequency",
-                "strategy": "Loyalty rewards, early access, premium bundles"
+                "name": "Occasional Browsers",
+                "color": "#6366f1",
+                "icon": "browser",
+                "avg_income": 34562,
+                "avg_spend": 98,
+                "avg_purchases": 5.9,
+                "avg_web_visits": 6.4,
+                "avg_deals": 1.85,
+                "avg_age": 54,
+                "description": "Browse frequently but rarely convert to purchases.",
+                "strategy": "Re-engagement emails and entry-level offers to drive first conversions."
             },
             {
                 "id": 2,
-                "name": "Mid-Tier Regulars",
-                "color": "#6366f1",
-                "icon": "midtier",
-                "count": 461,
-                "percentage": 20.6,
-                "avg_income": 53210,
-                "avg_spend": 685,
-                "avg_purchases": 16.1,
-                "avg_web_visits": 6.7,
-                "avg_age": 61,
-                "description": "High earners who are underengaged",
-                "strategy": "Personalized upsell campaigns and product recommendations"
+                "name": "High Value Champions",
+                "color": "#10b981",
+                "icon": "champion",
+                "avg_income": 73902,
+                "avg_spend": 1223,
+                "avg_purchases": 19.1,
+                "avg_web_visits": 3.1,
+                "avg_deals": 1.38,
+                "avg_age": 58,
+                "description": "Highest spend, most purchases, highest income — core revenue drivers.",
+                "strategy": "Retain with loyalty rewards and early access. Revenue loss risk is highest here."
             }
         ],
         "key_insights": [
             {
-                "title": "Champions drive 12x more revenue",
-                "detail": "High Value Champions spend an average of $1,224 vs $98 for Budget Shoppers — 12.5x more per customer.",
+                "title": "Champions spend 12x more than Browsers",
+                "detail": "High Value Champions average $1,223 per customer vs $98 for Occasional Browsers. Retaining one Champion is worth retaining 12 Browsers.",
                 "type": "revenue"
             },
             {
-                "title": "$19M untapped potential in Mid-Tier",
-                "detail": "Mid-Tier Regulars earn well but spend moderately. Closing the gap to Champions' spend level unlocks ~$539 per customer.",
-                "type": "opportunity"
+                "title": "Budget Shoppers are margin risk",
+                "detail": "Nearly 5 in every 16 purchases from Budget Shoppers are deal-driven. Without a loyalty strategy, margin continues to erode as this segment grows.",
+                "type": "warning"
             },
             {
-                "title": "Champions visit the web less",
-                "detail": "Higher-income customers visit the website less (3.1x/month vs 6.4x for Budget). They prefer catalog and in-store purchases.",
+                "title": "Champions rarely browse online",
+                "detail": "High Value Champions visit the website only 3x per month versus 6-7x for lower-value segments. They buy through catalog and in-store — digital campaigns alone will not reach them.",
                 "type": "behavior"
             },
             {
-                "title": "45% of customers are undermonetized",
-                "detail": "Budget Shoppers make up the largest segment but generate the least revenue. Better targeting could convert a fraction into regulars.",
-                "type": "warning"
+                "title": "Occasional Browsers are a low-cost growth lever",
+                "detail": "This segment has the highest web presence but lowest conversion. A targeted re-engagement campaign converting just 10% into Budget Shoppers adds meaningful volume at near-zero acquisition cost.",
+                "type": "opportunity"
             }
         ]
     }
